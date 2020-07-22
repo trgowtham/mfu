@@ -47,9 +47,13 @@ def load_nav(fund_pd, load_from_file):
 			x, y = line.strip().split(',')
 			mf_map[x] = y
 	for fund in fund_pd.columns:
-		if load_from_file:
-			load_mf_api(fund, mf_map[fund])
-		nav = json.load(open('../json/%s.json' % fund))
+		try:
+			if load_from_file:
+					load_mf_api(fund, mf_map[fund])
+			nav = json.load(open('../json/%s.json' % fund))
+		except:
+				print("%s: cannot load JSON" % fund)
+				sys.exit()
 		fmap = pd.DataFrame(nav['data'])
 		x = fund_pd[fund]
 		x['Fund Name'] = fund
@@ -104,13 +108,16 @@ def calculate_weight(fund_pd):
 
 
 def calculate_xirr(fund_pd, tx_pd):
+	xirr_total = []
 	for fund in fund_pd.columns:
 		x = fund_pd[fund]
-		xirr_data = []
 		f_data = tx_pd[tx_pd['AMC_Scheme_Name'] == fund]
 		xirr_data = f_data[['Transaction_Date','Amount(Credits/Debits)']].values.tolist()
 		xirr_data.append([x['NAV date'], x['Current Value']])
+		xirr_total.extend(xirr_data)
 		x['XIRR'] = xirr(xirr_data)*100
+	fund_pd['Total'] = None
+	fund_pd['Total']['XIRR'] = round(xirr(xirr_total)*100, 2)
 
 
 def calculate_dur_freq(fund_pd, tx_pd):
@@ -124,9 +131,12 @@ def calculate_dur_freq(fund_pd, tx_pd):
 		edate = f_data.iloc[-1]['Transaction_Date']
 		x['Duration'] = sdate + '-' + edate
 
-		last_month = (datetime.strptime(edate, "%b%y") - timedelta(days=30)).strftime("%b%y")
+		last_month = (datetime.now() - timedelta(days=30)).strftime("%b%y")
 		f_data = f_data[f_data['Transaction_Date'] == last_month]
-		x['Frequency'] = "%s(%s)" % (-f_data['Amount(Credits/Debits)'].sum(), len(f_data.index))
+		if f_data['Amount(Credits/Debits)'].sum() == 0:
+			x['Frequency'] = 'Inactive'
+		else:
+			x['Frequency'] = "%s(%s)" % (-f_data['Amount(Credits/Debits)'].sum(), len(f_data.index))
 
 
 def populate_txn(txn_fname):
@@ -139,6 +149,33 @@ def populate_txn(txn_fname):
 	                                    datetime.strptime(x,'%d-%b-%Y'))
 	txn['Amount(Credits/Debits)'] = -txn['Amount(Credits/Debits)']
 	return txn
+
+
+def pd_add_total(fund_pd):
+	# WORK IN PROGRESS
+	fund_tr = fund_pd.transpose()
+	x = fund_pd['Total']
+	#print(fund_pd.info())
+	#x['Total Inv'] = tx_pd.loc[tx_pd['AMC_Scheme_Name'] == fund, 'Units(Credits/Debits)'].sum()
+	#x['Total Inv'] = fund_tr.loc[True, 'Current Value'].sum()
+	#x['Total Inv'] = fund_pd['Total Inv'].sum(axis=1)
+	#x['Current Value'] = fund_pd['Current Value'].sum()
+	#print(fund_pd.loc(['Total Inv']))
+	#print(fund_pd)
+
+
+def make_pd_printable(fund_pd):
+	fund_pd.columns = fund_pd.columns.str.replace("_Direct_G", "")
+	fund_pd.columns = fund_pd.columns.str.replace("Franklin_Templeton_India", "Franklin")
+	fund_pd.columns = fund_pd.columns.str.replace("Franklin_Templeton_Franklin_India", "Franklin")
+	fund_pd.columns = fund_pd.columns.str.replace("Opportunities", "Opp")
+	fund_pd.columns = fund_pd.columns.str.replace("Aditya_Birla_Sun_Life", "ABSL")
+	fund_pd = fund_pd.transpose()
+	fund_pd.drop(['Fund Name'], axis = 1, inplace=True) 
+	fund_pd.drop(['Fund Type'], axis = 1, inplace=True) 
+	fund_pd.drop(['Category Wt'], axis = 1, inplace=True) 
+	fund_pd['NAV date'] = fund_pd['NAV date'].dt.strftime("%d-%m-%Y")
+	return fund_pd
 
 
 if __name__ == "__main__":
@@ -165,8 +202,11 @@ if __name__ == "__main__":
 	load_nav(fund_pd, '-f' in sys.argv)
 	calculate_amt(fund_pd, tx_pd)
 	calculate_weight(fund_pd)
-	calculate_xirr(fund_pd, tx_pd)
 	calculate_dur_freq(fund_pd, tx_pd)
+	calculate_xirr(fund_pd, tx_pd)
+	pd_add_total(fund_pd)
+	fund_pd = make_pd_printable(fund_pd)
 
-	print(fund_pd)
-	print(fund_pd.info())
+
+	print(fund_pd.to_markdown())
+	#print(fund_pd['Current Value'].sum())
