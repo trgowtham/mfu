@@ -168,6 +168,9 @@ def vr_summary():
 		tot_val = float(cur_data[fund]["nav"]) * unit_bal
 		xirr.append([datetime.strptime(cur_data[fund]["date"], "%d-%m-%Y").date(), tot_val])
 		txn_summary[fund]["xirr"] = xirr
+		if fund == 'HDFC_Short_Term_Debt_Fund_Direct_G':
+			print(xirr)
+			print(my_map)
 		txn_summary[fund]["tot_units"] = round(unit_bal, 4)
 		txn_summary[fund]["tot_val"] = round(tot_val, 4)
 		txn_summary[fund]["tot_inv"] = round(fund_bal, 4)
@@ -297,7 +300,7 @@ def print_summary(write_to_file):
 
 	inv_total = eq_total + hy_total + db_total
 
-	print("E", eq_total, "H", hy_total, "D", db_total, "T", inv_total);
+	#print("E", eq_total, "H", hy_total, "D", db_total, "T", inv_total);
 
 
 	for i in txn_summary.keys():
