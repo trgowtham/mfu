@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python
 
 import os, time, sys, requests, urllib, json
 from datetime import datetime,timedelta
@@ -8,13 +8,15 @@ from xirr import xirr
 
 # Import pandas as pd
 import pandas as pd
+#pd.options.display.float_format = '{:20,.2f}'.format
+#pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 index = ["Fund Name", "Fund Type", "NAV date", "Total Units", "Total Inv", "Cur NAV", "Current Value", "P/L", "XIRR", "Day P/L", "Week P/L", "Month P/L", "Duration", "Frequency", "Category Wt", "Portfolio Wt"]
 
 
 def fund_pd_init(fname, tx_pd):
 	fund_pd = pd.DataFrame(index=index)
-	if not os.path.isfile(fname):
+	if fname is None or not os.path.isfile(fname):
 		for line in tx_pd.AMC_Scheme_Name.tolist():
 			fund_pd[line.strip()] = None
 		return fund_pd
@@ -67,6 +69,7 @@ def load_nav(fund_pd, load_from_file):
 
 
 def calculate_amt(fund_pd, tx_pd):
+	tot_amt = [ 0, 0, 0]
 	for fund in fund_pd.columns:
 		x = fund_pd[fund]
 		x['Total Units'] = tx_pd.loc[tx_pd['AMC_Scheme_Name'] == fund, 'Units(Credits/Debits)'].sum()
@@ -76,15 +79,19 @@ def calculate_amt(fund_pd, tx_pd):
 
 		old_nav = x['Day P/L']
 		old_val = round((x['Cur NAV'] - old_nav) * x['Total Units'], 2)
+		tot_amt[0] += old_val
 		x['Day P/L'] = "%s(%s)" % (old_val, round((old_val/x['Current Value'])*100, 2))
 
 		old_nav = x['Week P/L']
 		old_val = round((x['Cur NAV'] - old_nav) * x['Total Units'], 2)
+		tot_amt[1] += old_val
 		x['Week P/L'] = "%s(%s)" % (old_val, round((old_val/x['Current Value'])*100, 2))
 
 		old_nav = x['Month P/L']
 		old_val = round((x['Cur NAV'] - old_nav) * x['Total Units'], 2)
+		tot_amt[2] += old_val
 		x['Month P/L'] = "%s(%s)" % (old_val, round((old_val/x['Current Value'])*100, 2))
+	return tot_amt
 
 
 def calculate_weight(fund_pd):
@@ -117,7 +124,7 @@ def calculate_xirr(fund_pd, tx_pd):
 		xirr_total.extend(xirr_data)
 		x['XIRR'] = xirr(xirr_data)*100
 	fund_pd['Total'] = None
-	fund_pd['Total']['XIRR'] = round(xirr(xirr_total)*100, 2)
+	fund_pd['Total']['XIRR'] = xirr(xirr_total)*100
 
 
 def calculate_dur_freq(fund_pd, tx_pd):
@@ -144,24 +151,22 @@ def populate_txn(txn_fname):
 	txn.columns = txn.columns.str.replace(" ", "_")
 	txn['Transaction_Type']= txn['Transaction_Type'].str.replace(" ", "_")
 	txn['AMC_Scheme_Name']= txn['AMC_Scheme_Name'].str.replace(" ", "_")
-	#txn['Transaction_Date'] = pd.to_datetime(txn['Transaction_Date'])
 	txn['Transaction_Date'] = txn['Transaction_Date'].apply(lambda x: 
 	                                    datetime.strptime(x,'%d-%b-%Y'))
 	txn['Amount(Credits/Debits)'] = -txn['Amount(Credits/Debits)']
 	return txn
 
 
-def pd_add_total(fund_pd):
-	# WORK IN PROGRESS
+def pd_add_total(fund_pd, tot_amt):
 	fund_tr = fund_pd.transpose()
 	x = fund_pd['Total']
-	#print(fund_pd.info())
-	#x['Total Inv'] = tx_pd.loc[tx_pd['AMC_Scheme_Name'] == fund, 'Units(Credits/Debits)'].sum()
-	#x['Total Inv'] = fund_tr.loc[True, 'Current Value'].sum()
-	#x['Total Inv'] = fund_pd['Total Inv'].sum(axis=1)
-	#x['Current Value'] = fund_pd['Current Value'].sum()
-	#print(fund_pd.loc(['Total Inv']))
-	#print(fund_pd)
+	x['Total Inv'] = fund_tr['Total Inv'].sum()
+	x['Current Value'] = fund_tr['Current Value'].sum()
+	x['Day P/L'] = "%s(%s)" % (round(tot_amt[0], 2), round(tot_amt[0]/x['Current Value']*100*100, 2))
+	x['Week P/L'] = "%s(%s)" % (round(tot_amt[1], 2), round(tot_amt[1]/x['Current Value']*100*100, 2))
+	x['Month P/L'] = "%s(%s)" % (round(tot_amt[2], 2), round(tot_amt[2]/x['Current Value']*100*100, 2))
+	# Not working
+	#x['NAV date'] = fund_tr['NAV date'].value_counts().keys().to_pydatetime()
 
 
 def make_pd_printable(fund_pd):
@@ -175,38 +180,36 @@ def make_pd_printable(fund_pd):
 	fund_pd.drop(['Fund Type'], axis = 1, inplace=True) 
 	fund_pd.drop(['Category Wt'], axis = 1, inplace=True) 
 	fund_pd['NAV date'] = fund_pd['NAV date'].dt.strftime("%d-%m-%Y")
+	fund_pd['XIRR'] = pd.to_numeric(fund_pd['XIRR'])
+	fund_pd['Current Value'] = pd.to_numeric(fund_pd['Current Value'])
+	fund_pd['XIRR'] = fund_pd['XIRR'].apply(lambda x: '%.2f' % x).values.tolist()
 	return fund_pd
 
 
 if __name__ == "__main__":
 
-	# Start cmdline options
-
-	if '-m' in sys.argv:
-		vr_file = "VR_M.csv"
-		fund_file = "MT.funds"
-		report_dir = "/mreport/"
-	else:
+	vr_file = os.environ.get('VR_FILE')
+	if vr_file is None:
 		vr_file = "VR.csv"
-		fund_file = "GT.funds"
+
+	fund_file = os.environ.get('FUND_FILE')
+	report_dir = os.environ.get('REPORT_DIR')
+	if report_dir is None:
 		report_dir = "/report/"
 
-	if '-u' in sys.argv:
-		vr_txn_update(active_funds[1])
+	if not os.path.isfile(vr_file):
+		print(vr_file + " doesn't exist")
 		sys.exit()
-	# End cmdline options
-
 
 	tx_pd = populate_txn(vr_file)
 	fund_pd = fund_pd_init(fund_file, tx_pd)
 	load_nav(fund_pd, '-f' in sys.argv)
-	calculate_amt(fund_pd, tx_pd)
+	tot_amt = calculate_amt(fund_pd, tx_pd)
 	calculate_weight(fund_pd)
 	calculate_dur_freq(fund_pd, tx_pd)
 	calculate_xirr(fund_pd, tx_pd)
-	pd_add_total(fund_pd)
+	pd_add_total(fund_pd, tot_amt)
 	fund_pd = make_pd_printable(fund_pd)
 
 
 	print(fund_pd.to_markdown())
-	#print(fund_pd['Current Value'].sum())
