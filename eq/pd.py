@@ -280,7 +280,7 @@ if __name__ == '__main__':
 	fund_file = os.environ.get('FUND_FILE')
 	report_dir = os.environ.get('REPORT_DIR')
 	if report_dir is None:
-		report_dir = '/report/'
+		report_dir = 'report'
 
 	if not os.path.isfile(vr_file):
 		print(vr_file + ' doesnt exist')
@@ -303,7 +303,7 @@ if __name__ == '__main__':
 
 	if '-f' in sys.argv:
 		file_name = fund_pd['NAV date'].value_counts()[:2].index.tolist()[0]
-		report_name = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)) + report_dir + time.strftime(file_name, time.localtime())
+		report_name = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)) + '/' + report_dir '/' + time.strftime(file_name, time.localtime())
 		with open(report_name, 'w') as f:
 			f.write(tabulate(fund_pd, headers=fund_pd.columns, numalign="left", tablefmt="grid", floatfmt='.8g'))
 			f.write('\n')
