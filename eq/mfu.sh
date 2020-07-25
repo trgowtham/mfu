@@ -1,41 +1,81 @@
 #!/bin/bash
 
-if [ $# -lt 2 ]; then
-	echo "Usage: mfu.sh <full path to PDF> password"
+DIR="$( cd "$(dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+PDIR="$(dirname "$DIR")"
+
+if [ ! -d "$DIR" ]; then
+	echo "$DIR not found!"
 	exit 1
 fi
 
-if [ ! -f "$1" ]; then
-	echo "$1 not found"
+if [ ! -d "$PDIR/casparser" ]; then
+	echo "casparser not found!"
 	exit 1
 fi
 
-if [ ! -d /Users/gowtham/Downloads/mfu/eq ]; then
-	echo "/Users/gowtham/Downloads/mfu/eq not found!"
+usage()
+{
+	echo "mfu.sh"
+	echo "     -p <Full path to CAMS pdf>"
+	echo "     -z <Password to the pdf file>"
+	echo "     -f Load latest NAV"
+	echo "     -m <Fund file>"
+	echo "     -r <Report directory> Default ../report"
+	#echo "     -g Report only capital gain"
+}
+
+while getopts "hp:m:fr:cz:" OPTION; do
+    case $OPTION in
+    m)
+        ENVI="$ENVI FUND_FILE=$OPTARG"
+        ;;
+    f)
+        ARG="-f"
+        ;;
+    r)
+        ENVI="$ENVI REPORT_DIR=$OPTARG"
+        ;;
+    c)
+        CGAINS="-c"
+		usage
+        exit 1
+        ;;
+    z)
+        PASS=$OPTARG
+        ;;
+    p)
+        PDFFILE=$OPTARG
+        ;;
+	h)
+		usage
+		exit 1
+		;;
+    *)
+        echo "Incorrect options provided"
+		usage
+        exit 1
+        ;;
+    esac
+done
+
+if [ -z "$PDFFILE" ] || [ -z "$PASS" ]; then
+	usage
 	exit 1
 fi
 
-if [ ! -d /Users/gowtham/Downloads/mfu/casparser ]; then
-	echo "caspasrser not found!"
+if [ ! -f "$PDFFILE" ]; then
+	echo "$PDFFILE not found"
 	exit 1
 fi
 
-OPT="$3 $4"
-
-cd /Users/gowtham/Downloads/mfu/eq
+cd $DIR
 
 rm -f CAMS.pdf CAMS.pdf.csv VR.csv
 
-cp $1 CAMS.pdf
+cp $PDFFILE CAMS.pdf
 
-node ../casparser/casparser.js CAMS.pdf $2 -csv
-
-if [ "$3" = '-m' ] || [ "$4" = '-m' ]; then
-	ARG="FUND_FILE=MT.funds"
-else
-	ARG="FUND_FILE=GT.funds"
-fi
+node ../casparser/casparser.js CAMS.pdf $PASS -csv
 
 ./cams_convert_csv.py CAMS.pdf.csv VR.csv
 
-env $ARG ./pd.py $OPT
+env $ENVI ./pd.py $ARG $CGAINS
