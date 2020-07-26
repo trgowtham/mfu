@@ -111,11 +111,13 @@ def calculate_weight(fund_pd):
 
 	for fund in fund_pd.columns:
 		x = fund_pd[fund]
-		x_type = x.loc[['Fund Type']][0][0]
+		x_type = x.loc[['Fund Type']][0]
 		if x_type == 'Equity' or x_type == 'Hybrid':
-			x['Category Wt'] = (x['Current Value']/(eq_total+hybrid_total))*100
+			if (eq_total+hybrid_total) > 0:
+				x['Category Wt'] = (x['Current Value']/(eq_total+hybrid_total))*100
 		else:
-			x['Category Wt'] = (x['Current Value']/debt_total)*100
+			if debt_total > 0:
+				x['Category Wt'] = (x['Current Value']/debt_total)*100
 		x['Portfolio Wt'] = (x['Current Value']/portfolio_total)*100
 
 
@@ -138,13 +140,16 @@ def calculate_xirr(fund_pd, tx_pd):
 		xirr_total.extend(xirr_data)
 		x['XIRR'] = xirr(xirr_data)*100
 	fund_pd['Total'] = None
-	fund_pd['Equity'] = None
-	fund_pd['Debt'] = None
-	fund_pd['Hybrid'] = None
 	fund_pd['Total']['XIRR'] = xirr(xirr_total)*100
-	fund_pd['Equity']['XIRR'] = xirr(xirr_eq)*100
-	fund_pd['Debt']['XIRR'] = xirr(xirr_db)*100
-	fund_pd['Hybrid']['XIRR'] = xirr(xirr_hy)*100
+	if len(xirr_eq) > 0:
+		fund_pd['Equity'] = None
+		fund_pd['Equity']['XIRR'] = xirr(xirr_eq)*100
+	if len(xirr_db) > 0:
+		fund_pd['Debt'] = None
+		fund_pd['Debt']['XIRR'] = xirr(xirr_db)*100
+	if len(xirr_hy) > 0:
+		fund_pd['Hybrid'] = None
+		fund_pd['Hybrid']['XIRR'] = xirr(xirr_hy)*100
 
 
 def calculate_dur_freq(fund_pd, tx_pd):
@@ -179,7 +184,10 @@ def populate_txn(txn_fname):
 
 def add_amt(fund_pd, ftype):
 	fund_tr = fund_pd.transpose()
-	x = fund_pd[ftype]
+	try:
+		x = fund_pd[ftype]
+	except:
+		return
 	x['Fund Name'] = ftype
 	x['Fund Type'] = ftype
 	x['Total Inv'] = fund_tr.loc[fund_tr['Fund Type'] == ftype, 'Total Inv'].sum()
@@ -222,12 +230,18 @@ def format_data(fund_pd):
 
 	type_list = ['Total', 'Debt', 'Equity', 'Hybrid']
 	for ftype in type_list:
-		x = fund_pd[ftype]
+		try:
+			x = fund_pd[ftype]
+		except:
+			continue
 		x['Fund Name'] = ftype +' ========>'
 		x['Total Units'] = '========'
 		x['Cur NAV'] = '========'
 	for fund in fund_pd.columns:
-		x = fund_pd[fund]
+		try:
+			x = fund_pd[fund]
+		except:
+			continue
 		# Not Working
 		#x['XIRR'] = '%s%%' % (x['XIRR'])
 		if fund in type_list:
