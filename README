@@ -74,3 +74,23 @@ Aditya_Birla_Sun_Life_Equity_Advantage_Fund
 Aditya_Birla_Sun_Life_Frontline_Equity
 Axis_Long_Term_Equity
 
+5. Other tools
+
+duration.py
+
+$ mfu/ref/duration_inv.py
+Usage: duration_inv.py <CSV file path> <fund string> <start date 01-01-2017> <end date 01-01-2017>
+
+Give input as the CSV file, <fund pattern> , start date and end date. It will tell unit txn during that period.
+Useful for selling Fund units older than a year to avoid STCG/Exit load.
+
+Eg:
+
+$ ./duration_inv.py ../eq/VR.csv small 20-Jun-2017 22-Jun-2019
+Loading from ../eq/VR.csv...
+Fund Name: Franklin Templeton Franklin India Smaller Companies
+Start date: 20-Jun-2017
+End date: 20-Jun-2019
+Units: 878.788
+Amt: 52000.0
+Cur Value: 39556.62 (24-07-2020)
