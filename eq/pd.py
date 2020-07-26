@@ -4,7 +4,7 @@ import os, time, sys, requests, urllib, json
 from datetime import datetime,timedelta
 from tabulate import tabulate
 
-#from capital_gain import capital_gain
+from capital_gain import capital_summary
 from xirr import xirr
 
 # Import pandas as pd
@@ -287,6 +287,11 @@ if __name__ == '__main__':
 		sys.exit()
 
 	tx_pd = populate_txn(vr_file)
+
+	if '-c' in sys.argv:
+		capital_summary(tx_pd)
+		sys.exit()
+
 	fund_pd = fund_pd_init(fund_file, tx_pd)
 	fund_pd = load_nav(fund_pd, '-f' in sys.argv)
 	tot_amt = calculate_amt(fund_pd, tx_pd)

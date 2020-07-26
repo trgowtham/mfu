@@ -21,7 +21,7 @@ usage()
 	echo "     -f Load latest NAV"
 	echo "     -m <Fund file>"
 	echo "     -r <Report directory> Default ../report"
-	#echo "     -g Report only capital gain"
+	echo "     -c Report only capital gain"
 }
 
 while getopts "hp:m:fr:cz:" OPTION; do
@@ -37,8 +37,6 @@ while getopts "hp:m:fr:cz:" OPTION; do
         ;;
     c)
         CGAINS="-c"
-		usage
-        exit 1
         ;;
     z)
         PASS=$OPTARG
@@ -78,4 +76,8 @@ node ../casparser/casparser.js CAMS.pdf $PASS -csv
 
 ./cams_convert_csv.py CAMS.pdf.csv VR.csv
 
-env $ENVI ./pd.py $ARG $CGAINS
+if [ -z "$CGAINS" ]; then
+	env $ENVI ./pd.py $ARG $CGAINS
+else
+	./pd.py -c
+fi

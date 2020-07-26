@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import datetime
-
+import pandas as pd
+from tabulate import tabulate
 
 def leap_year(year):
 	if (year % 4) == 0:
@@ -15,6 +16,7 @@ def leap_year(year):
 	else:
 		return 90
 
+
 def gain_summary(gain_list):
 	gain_sum = {}
 	for i in gain_list:
@@ -24,7 +26,6 @@ def gain_summary(gain_list):
 		gain_sum[year] = gain_sum[year] + float(i[1])
 
 	return gain_sum
-
 
 
 def capital_gain(t_list):
@@ -66,3 +67,31 @@ def capital_gain(t_list):
 
 	return gain_summary(gain_list)
 
+
+def capital_summary(tx_pd):
+
+	# List of all funds that have a Redemption
+	flist = list(set(tx_pd.loc[tx_pd['Amount(Credits/Debits)'] > 0, 'AMC_Scheme_Name'].values.tolist()))
+	cap_dict = {}
+
+	for f in flist:
+		# Send filtered list of txns to capital_gain() for calculating gain
+		c_txn = tx_pd.loc[tx_pd['AMC_Scheme_Name'] == f].values.tolist()
+		for c in c_txn:
+			c[0] = c[0].to_pydatetime().date()
+			del(c[1])
+			del(c[1])
+			del(c[3])
+			c[3] = -c[3]
+		c_txn.sort(key=lambda date: date[0])
+		cap_data = capital_gain(c_txn)
+		cap_dict[f] = cap_data
+	
+	# Create DataFrame and sort the data
+	cap_pd = pd.DataFrame.from_dict(cap_dict, orient='index')
+	cap_pd.sort_index(inplace=True)
+	years = cap_pd.columns.tolist()
+	years.sort()
+	cap_pd = cap_pd[years]
+
+	print(tabulate(cap_pd, headers=cap_pd.columns, numalign="left", tablefmt="grid", floatfmt='.8g'))
