@@ -7,9 +7,11 @@ All command will be executed at the level of this file.
 2. Create virtual env by running tox.This will use tox.ini.
 
    `python3.6 -m tox`
+   python3.7 -m tox
 3. Activate virtual env
 
    `source .tox/py36/bin/activate`
+   source .tox/py36/bin/activate
    
 4. Now run any command in this project.
 
@@ -44,10 +46,26 @@ Please note the '_' instead of spaces
 
 3. Run mfu.sh with path to CAMS.pdf and password as arguments.
 
-$ ./mfu.sh
-Usage: mfu.sh <full path to PDF> password
+$ ./eq/mfu.sh
+mfu.sh
+     -p <Full path to CAMS pdf>
+     -z <Password to the pdf file>
+     -f Load latest NAV
+     -m <Fund file>
+     -r <Report directory> Default ../report
+     -c Report only capital gain
 
-If you want to skip few funds and interested only in few of them, create a file like GT.funds and add all valid funds to it.
+'-p', '-z' are mandatory options to be given i.e PDF and password
+
+'-f' to be run for first time. Subsequently it has to be given if we want to load latest NAV from mfapi
+
+'-m' is optional. Give if the list of funds is different from what reported in PDF. Eg: We do not want data of funds which are no longer active.
+
+'-r' is optional. The directory where the report will be stored. mfu/<report_dir>
+
+'-c' is optional. If given, it reports only capital gain/loss year-wise.
+
+If you want to skip few funds and interested only in few of them, create a file like GT.funds and add all valid funds to it. Feed it to script using '-m' to mfu.sh
 
 Eg:
 
@@ -56,4 +74,3 @@ Aditya_Birla_Sun_Life_Equity_Advantage_Fund
 Aditya_Birla_Sun_Life_Frontline_Equity
 Axis_Long_Term_Equity
 
-Modify mfu.sh to send the file name to pd.py as FUND_FILE=GT.funds

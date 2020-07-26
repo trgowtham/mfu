@@ -215,8 +215,6 @@ def pd_add_total(fund_pd, tot_amt):
 	x['Month P/L'] = round(fund_tr['Month P/L'].sum(), 2)
 	x['Duration'] = 'W: %s (%s%%)' % (round(x['Week P/L'], 2), round(x['Week P/L']/x['Current Value']*100, 2))
 	x['Frequency'] = 'M: %s (%s%%)' % (round(x['Month P/L'], 2), round(x['Month P/L']/x['Current Value']*100, 2))
-	# Not working
-	#x['NAV date'] = fund_tr['NAV date'].value_counts().keys().to_pydatetime()
 
 def format_data(fund_pd):
 
@@ -300,16 +298,27 @@ if __name__ == '__main__':
 	calculate_xirr(fund_pd, tx_pd)
 	pd_add_total(fund_pd, tot_amt)
 	fund_pd = calculate_category(fund_pd)
+
 	fund_pd = make_pd_printable(fund_pd)
-
-
 	print(tabulate(fund_pd, headers=fund_pd.columns, numalign="left", tablefmt="grid", floatfmt='.8g'))
-	#print(fund_pd.to_markdown())
 
+	par_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+	file_name = fund_pd['NAV date'].value_counts()[:2].index.tolist()[0]
+	# Write tabulate format to report_dir
 	if '-f' in sys.argv:
-		file_name = fund_pd['NAV date'].value_counts()[:2].index.tolist()[0]
-		report_name = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)) + '/' + report_dir + '/' + time.strftime(file_name, time.localtime())
+		report_dir = par_dir + '/' + report_dir + '/'
+		if not os.path.exists(report_dir):
+			os.makedirs(report_dir)
+		report_name = report_dir + '/' + time.strftime(file_name, time.localtime())
 		with open(report_name, 'w') as f:
 			f.write(tabulate(fund_pd, headers=fund_pd.columns, numalign="left", tablefmt="grid", floatfmt='.8g'))
 			f.write('\n')
+
+	# Create csv file for records and plotting
+	csv_dir = par_dir + '/csv/'
+	if not os.path.exists(csv_dir):
+		os.makedirs(csv_dir)
+	csv_name = csv_dir + '/' + time.strftime(file_name, time.localtime())
+	with open(csv_name, 'w') as f:
+		fund_pd.to_csv(csv_name)
 
