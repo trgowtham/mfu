@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python
 
 import os, time, sys, requests, urllib, json
 from datetime import datetime,timedelta
@@ -10,10 +10,10 @@ from xirr import xirr
 import pandas as pd
 
 def is_float(str):
-	try :  
-	    float(str) 
+	try :
+	    float(str)
 	    res = True
-	except : 
+	except :
 	    res = False
 	return(res)
 
@@ -31,7 +31,7 @@ def process_csv(cname):
 			else:
 				invtype = "Redemption"
 
-			data.append([lines[3], lines[2], invtype, 
+			data.append([lines[3], lines[2], invtype,
 				lines[6], lines[4], lines[7], lines[5]])
 	return(data)
 

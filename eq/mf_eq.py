@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python
 
 import os,time
 from datetime import datetime,timedelta
@@ -57,9 +57,9 @@ def change_fund(l):
 def vr_txn_update(fname):
 
 	if os.path.exists(fname):
-		os.system("rm %s_bk" % fname)  
-		os.system("cp %s tmp.csv" % fname)  
-		os.system("cp %s %s_bk" % (fname, fname))  
+		os.system("rm %s_bk" % fname)
+		os.system("cp %s tmp.csv" % fname)
+		os.system("cp %s %s_bk" % (fname, fname))
 	else:
 		return
 
@@ -195,7 +195,7 @@ def load_json(fname):
 	with open(fname) as json_data:
 		d = json.load(json_data)
 		json_data.close()
-	
+
 	return d
 
 def load_mf_api(fname, load_from_file):
@@ -302,7 +302,7 @@ def print_summary(write_to_file):
 	for i in txn_summary.keys():
 		summary[i] = [shorten_fund(i), cur_data[i]["date"],
 		txn_summary[i]["tot_units"], txn_summary[i]["tot_inv"],
-		cur_data[i]["nav"], get_wt(i, txn_summary[i]["tot_val"], eq_total, hy_total, db_total), 
+		cur_data[i]["nav"], get_wt(i, txn_summary[i]["tot_val"], eq_total, hy_total, db_total),
 		round(txn_summary[i]["tot_val"] - txn_summary[i]["tot_inv"], 4),
 		str(round(100 * xirr(txn_summary[i]["xirr"]), 2))+"%",
 		pl_pct(txn_summary[i]["day_chg"], txn_summary[i]["tot_val"]),
@@ -379,7 +379,7 @@ def print_cap_summary(cap_data):
 				cap_years[y] = []
 			cap_years[y].append(f)
 	cap_years = sorted(cap_years.keys())
-	head = [ "" ] +  cap_years 
+	head = [ "" ] +  cap_years
 	tot = []
 	tot.append("Total")
 	c_sum = {}
