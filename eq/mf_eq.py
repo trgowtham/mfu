@@ -13,23 +13,23 @@ from xirr import xirr
 
 txn_ignore = ['Transaction Date', 'Segregated Portfolio', '01-Jun-2018,HDFC Hybrid Equity Fund Direct G,Merger Investment,52.91400,5678.70200,5678.70200,300483.00000']
 
-gt_funds = ['Aditya_Birla_Sun_Life_Equity_Advantage_Fund_Direct_G', 'Aditya_Birla_Sun_Life_Frontline_Equity_Direct_G',
-'Axis_Long_Term_Equity_Direct_G', 'Franklin_Templeton_Franklin_India_Smaller_Companies_Direct_G',
-'Franklin_Templeton_India_Focused_Equity_Fund_Direct_G', 'HDFC_Hybrid_Equity_Fund_Direct_G',
-'Mirae_Asset_Emerging_Bluechip_Direct_G', 'Mirae_Asset_Hybrid_Equity_Fund_Direct_G',
-'Mirae_Asset_Large_Cap_Fund_Direct_G', 'SBI_Bluechip_Direct_G',
-'SBI_Healthcare_Opportunities_Fund_Direct_G', 'Indiabulls_Ultra_Short_Term_Direct_G',
-'Aditya_Birla_Sun_Life_Corporate_Bond_Fund_Direct_G', 'HDFC_Short_Term_Debt_Fund_Direct_G',
-'Franklin_Templeton_Franklin_India_Ultra_Short_Bond_Direct_G', 'Indiabulls_Liquid_Direct_G',
-'Nippon_India_Low_Duration_Fund_Direct_G', 'Nippon_India_Gilt_Securities_Inst_Direct_G',
-'Franklin_Templeton_India_Liquid_Fund_Direct_G', 'Mirae_Asset_Cash_Management_Direct_G',
-'SBI_Magnum_Constant_Maturity_Fund_Direct_G', 'PPFAS_Long_Term_Equity_Fund_Direct_G',
-'Axis_Banking_&_PSU_Debt_Fund_Direct_G', 'Axis_Liquid_Direct_G']
+gt_funds = ['Aditya_Birla_Sun_Life_Equity_Advantage_Fund', 'Aditya_Birla_Sun_Life_Frontline_Equity',
+'Axis_Long_Term_Equity', 'Franklin_Templeton_Franklin_India_Smaller_Companies',
+'Franklin_Templeton_India_Focused_Equity_Fund', 'HDFC_Hybrid_Equity_Fund',
+'Mirae_Asset_Emerging_Bluechip', 'Mirae_Asset_Hybrid_Equity_Fund',
+'Mirae_Asset_Large_Cap_Fund', 'SBI_Bluechip',
+'SBI_Healthcare_Opportunities_Fund', 'Indiabulls_Ultra_Short_Term',
+'Aditya_Birla_Sun_Life_Corporate_Bond_Fund', 'HDFC_Short_Term_Debt_Fund',
+'Franklin_Templeton_Franklin_India_Ultra_Short_Bond', 'Indiabulls_Liquid',
+'Nippon_India_Low_Duration_Fund', 'Nippon_India_Gilt_Securities_Inst',
+'Franklin_Templeton_India_Liquid_Fund', 'Mirae_Asset_Cash_Management',
+'SBI_Magnum_Constant_Maturity_Fund', 'PPFAS_Long_Term_Equity_Fund',
+'Axis_Banking_&_PSU_Debt_Fund', 'Axis_Liquid']
 
 gt_file = "VR.csv"
 mt_file = "VR_M.csv"
 
-mt_funds = ['HDFC_Corporate_Bond_Fund_Direct_G', 'Nippon_India_Low_Duration_Fund_Direct_G', 'Franklin_Templeton_Franklin_India_Dynamic_Accrual_Fund_Direct_G', 'Franklin_Templeton_India_Liquid_Fund_Direct_G', 'Franklin_Templeton_Franklin_India_Low_Duration_Direct_G', 'ICICI_Prudential_All_Seasons_Bond_Fund_Direct_G', 'ICICI_Prudential_Equity_&_Debt_Fund_Direct_G', 'Indiabulls_Ultra_Short_Term_Direct_G', 'Invesco_India_Money_Market_Fund_Direct_G', 'L&T_Hybrid_Equity_Fund_Direct_G', 'L&T_India_Value_Direct_G', 'L&T_Money_Market_Fund_Direct_G']
+mt_funds = ['HDFC_Corporate_Bond_Fund', 'Nippon_India_Low_Duration_Fund', 'Franklin_Templeton_Franklin_India_Dynamic_Accrual_Fund', 'Franklin_Templeton_India_Liquid_Fund', 'Franklin_Templeton_Franklin_India_Low_Duration', 'ICICI_Prudential_All_Seasons_Bond_Fund', 'ICICI_Prudential_Equity_&_Debt_Fund', 'Indiabulls_Ultra_Short_Term', 'Invesco_India_Money_Market_Fund', 'L&T_Hybrid_Equity_Fund', 'L&T_India_Value', 'L&T_Money_Market_Fund']
 
 fund_map = {}
 
@@ -168,9 +168,6 @@ def vr_summary():
 		tot_val = float(cur_data[fund]["nav"]) * unit_bal
 		xirr.append([datetime.strptime(cur_data[fund]["date"], "%d-%m-%Y").date(), tot_val])
 		txn_summary[fund]["xirr"] = xirr
-		if fund == 'HDFC_Short_Term_Debt_Fund_Direct_G':
-			print(xirr)
-			print(my_map)
 		txn_summary[fund]["tot_units"] = round(unit_bal, 4)
 		txn_summary[fund]["tot_val"] = round(tot_val, 4)
 		txn_summary[fund]["tot_inv"] = round(fund_bal, 4)
@@ -239,7 +236,7 @@ def shorten_fund(f):
 	f = f.replace("Franklin_Templeton_Franklin", "Franklin_Templeton")
 	f = f.replace("Aditya_Birla_Sun_Life", "ABSL")
 	f = f.replace("Franklin_Templeton_India", "Franklin")
-	f = f.replace("_Direct_G", "")
+	f = f.replace("", "")
 	return f
 
 def fund_summary(i):
@@ -248,7 +245,6 @@ def fund_summary(i):
 	f = i.replace("Franklin_Templeton_Franklin", "Franklin_Templeton")
 	f = f.replace("Aditya_Birla_Sun_Life", "ABSL")
 	f = f.replace("Franklin_Templeton_India", "Franklin")
-	f = f.replace("_Direct_G", "")
 	#print(i, txn_summary.keys())
 	tab.append([f, cur_data[i]["date"], txn_summary[i]["tot_units"], txn_summary[i]["tot_inv"], cur_data[i]["nav"], txn_summary[i]["tot_val"], round(txn_summary[i]["tot_val"] - txn_summary[i]["tot_inv"], 4), round(100 * xirr(txn_summary[i]["xirr"]), 2), txn_summary[i]["duration"], txn_summary[i]["frequency"]])
 	print(tabulate(tab, headers=head, numalign="left", tablefmt="grid", floatfmt='.8g'))
