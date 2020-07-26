@@ -93,5 +93,7 @@ def capital_summary(tx_pd):
 	years = cap_pd.columns.tolist()
 	years.sort()
 	cap_pd = cap_pd[years]
+	# Add Total row
+	cap_pd = cap_pd.append(cap_pd.sum().rename('Total'))
 
 	print(tabulate(cap_pd, headers=cap_pd.columns, numalign="left", tablefmt="grid", floatfmt='.8g'))
