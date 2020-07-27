@@ -1,0 +1,6 @@
+Run like this: 
+  # ./new_approach.py -f 'pdf-csv file path'
+  This will give only 1 best match
+
+  # ./new_approach.py -f 'pdf-csv file path' -a
+  This will give all matches it found
