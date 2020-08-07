@@ -318,21 +318,20 @@ if __name__ == '__main__':
 
 	par_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
 	file_name = fund_pd['NAV date'].value_counts()[:2].index.tolist()[0]
+
 	# Write tabulate format to report_dir
+	report_dir = par_dir + '/' + report_dir + '/'
+	if not os.path.exists(report_dir):
+		os.makedirs(report_dir)
+	report_name = report_dir + '/' + time.strftime(file_name, time.localtime())
 	if '-f' in sys.argv:
-		report_dir = par_dir + '/' + report_dir + '/'
-		if not os.path.exists(report_dir):
-			os.makedirs(report_dir)
-		report_name = report_dir + '/' + time.strftime(file_name, time.localtime())
 		with open(report_name, 'w') as f:
 			f.write(tabulate(fund_pd, headers=fund_pd.columns, numalign="left", tablefmt="grid", floatfmt='.8g'))
 			f.write('\n')
 
 	# Create csv file for records and plotting
-	csv_dir = par_dir + '/csv/'
-	if not os.path.exists(csv_dir):
-		os.makedirs(csv_dir)
-	csv_name = csv_dir + '/' + time.strftime(file_name, time.localtime())
+	csv_name = report_dir + '/' + time.strftime(file_name, time.localtime())
+	csv_name = csv_name + ".csv"
 	with open(csv_name, 'w') as f:
 		csv_pd.to_csv(csv_name)
 
