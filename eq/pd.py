@@ -168,7 +168,7 @@ def calculate_dur_freq(fund_pd, tx_pd):
 		if f_data['Amount(Credits/Debits)'].sum() == 0:
 			x['Frequency'] = 'Inactive'
 		else:
-			x['Frequency'] = '%s(%s)' % (-f_data['Amount(Credits/Debits)'].sum(), len(f_data.index))
+			x['Frequency'] = '%s(%s)' % (round(-f_data['Amount(Credits/Debits)'].sum(), 2), len(f_data.index))
 
 
 def populate_txn(txn_fname):
@@ -268,12 +268,12 @@ def make_pd_printable(fund_pd):
 	fund_pd['Fund Name'] = fund_pd['Fund Name'].str.replace('Opportunities', 'Opp')
 
 	# Drop unwanted Columns
-	fund_pd.drop(['Fund Type'], axis = 1, inplace=True) 
-	fund_pd.drop(['Fund Sub-Type'], axis = 1, inplace=True) 
-	fund_pd.drop(['Category Wt'], axis = 1, inplace=True) 
-	fund_pd.drop(['Portfolio Wt'], axis = 1, inplace=True) 
-	fund_pd.drop(['Week P/L'], axis = 1, inplace=True) 
-	fund_pd.drop(['Month P/L'], axis = 1, inplace=True) 
+	fund_pd.drop(['Fund Type'], axis = 1, inplace=True)
+	fund_pd.drop(['Fund Sub-Type'], axis = 1, inplace=True)
+	fund_pd.drop(['Category Wt'], axis = 1, inplace=True)
+	fund_pd.drop(['Portfolio Wt'], axis = 1, inplace=True)
+	fund_pd.drop(['Week P/L'], axis = 1, inplace=True)
+	fund_pd.drop(['Month P/L'], axis = 1, inplace=True)
 
 	# format data types
 	fund_pd['NAV date'] = fund_pd['NAV date'].dt.strftime('%d-%m-%Y')
@@ -312,7 +312,7 @@ if __name__ == '__main__':
 	calculate_xirr(fund_pd, tx_pd)
 	pd_add_total(fund_pd, tot_amt)
 	fund_pd = calculate_category(fund_pd)
-
+	csv_pd = fund_pd.transpose()
 	fund_pd = make_pd_printable(fund_pd)
 	print(tabulate(fund_pd, headers=fund_pd.columns, numalign="left", tablefmt="grid", floatfmt='.8g'))
 
@@ -334,5 +334,5 @@ if __name__ == '__main__':
 		os.makedirs(csv_dir)
 	csv_name = csv_dir + '/' + time.strftime(file_name, time.localtime())
 	with open(csv_name, 'w') as f:
-		fund_pd.to_csv(csv_name)
+		csv_pd.to_csv(csv_name)
 
