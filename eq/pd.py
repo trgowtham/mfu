@@ -61,7 +61,7 @@ def load_nav(fund_pd, load_from_file):
 		x['Fund Type'] = nav['meta']['scheme_category'].split(' Scheme - ')[0]
 		x['Fund Sub-Type'] = nav['meta']['scheme_category'].split(' Scheme - ')[1]
 		x['NAV date'] = fmap.loc[0]['date']
-		x['NAV date'] = pd.to_datetime(x['NAV date'])
+		x['NAV date'] = pd.to_datetime(x['NAV date'], dayfirst=True)
 		x['Cur NAV'] = float(fmap.loc[0]['nav'])
 		x['Day P/L'] = float(fmap.loc[1]['nav'])
 		x['Week P/L'] = float(fmap.loc[5]['nav'])
