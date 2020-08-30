@@ -80,6 +80,9 @@ def calculate_amt(fund_pd, tx_pd):
 		x['Total Units'] = round(tx_pd.loc[tx_pd['AMC_Scheme_Name'] == fund, 'Units(Credits/Debits)'].sum(), 4)
 		x['Total Inv'] = -tx_pd.loc[tx_pd['AMC_Scheme_Name'] == fund, 'Amount(Credits/Debits)'].sum()
 		x['Current Value'] = float(x['Cur NAV']) * float(x['Total Units'])
+		if x['Current Value'] <= 0:
+			fund_pd = fund_pd.drop(fund, axis=1)
+			continue
 		x['P/L'] = round(x['Current Value'] - float(x['Total Inv']), 2)
 
 		old_nav = x['Day P/L']
@@ -96,7 +99,7 @@ def calculate_amt(fund_pd, tx_pd):
 		old_val = round((x['Cur NAV'] - old_nav) * x['Total Units'], 2)
 		tot_amt[2] += old_val
 		x['Month P/L'] = old_val
-	return tot_amt
+	return (tot_amt, fund_pd)
 
 
 def calculate_weight(fund_pd):
@@ -306,7 +309,7 @@ if __name__ == '__main__':
 
 	fund_pd = fund_pd_init(fund_file, tx_pd)
 	fund_pd = load_nav(fund_pd, '-f' in sys.argv)
-	tot_amt = calculate_amt(fund_pd, tx_pd)
+	(tot_amt, fund_pd) = calculate_amt(fund_pd, tx_pd)
 	calculate_weight(fund_pd)
 	calculate_dur_freq(fund_pd, tx_pd)
 	calculate_xirr(fund_pd, tx_pd)
