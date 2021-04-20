@@ -24,7 +24,7 @@ usage()
 	echo "     -c Report only capital gain"
 }
 
-while getopts "hp:m:fr:cz:" OPTION; do
+while getopts "hp:m:fr:cuz:" OPTION; do
     case $OPTION in
     m)
         ENVI="$ENVI FUND_FILE=$OPTARG"
@@ -37,6 +37,9 @@ while getopts "hp:m:fr:cz:" OPTION; do
         ;;
     c)
         CGAINS="-c"
+        ;;
+    u)
+        CONV_ONLY="-u"
         ;;
     z)
         PASS=$OPTARG
@@ -75,6 +78,10 @@ cp $PDFFILE CAMS.pdf
 node ../casparser/casparser.js CAMS.pdf $PASS -csv
 
 ./cams_convert_csv.py CAMS.pdf.csv VR.csv
+
+if [ ! -z "$CONV_ONLY" ]; then
+	exit 0
+fi
 
 if [ -z "$CGAINS" ]; then
 	env $ENVI ./pd.py $ARG $CGAINS

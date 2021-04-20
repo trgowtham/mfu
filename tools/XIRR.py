@@ -7,7 +7,7 @@ import sys
 from datetime import date, datetime
 
 date_field = 0
-amt_field = 1
+amt_field = 6
 
 def xirr(transactions):
 
@@ -47,7 +47,7 @@ def load_tas_from_file(fname):
 	with open(fname) as f:
 		for lines in f.readlines():
 			l = lines.split(',')
-			tas.append((datetime.strptime(l[date_field], "%d-%m-%Y").date(), -float(l[amt_field])))
+			tas.append((datetime.strptime(l[date_field], "%d-%b-%Y").date(), -float(l[amt_field])))
 		return tas
 
 if __name__ == '__main__':

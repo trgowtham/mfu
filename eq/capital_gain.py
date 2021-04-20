@@ -67,9 +67,11 @@ def capital_gain(t_list):
 
 	return gain_summary(gain_list)
 
+def printable(cap_pd):
+	return cap_pd
 
 def capital_summary(tx_pd):
-
+	print(tx_pd)
 	# List of all funds that have a Redemption
 	flist = list(set(tx_pd.loc[tx_pd['Amount(Credits/Debits)'] > 0, 'AMC_Scheme_Name'].values.tolist()))
 	cap_dict = {}
@@ -93,6 +95,7 @@ def capital_summary(tx_pd):
 	years = cap_pd.columns.tolist()
 	years.sort()
 	cap_pd = cap_pd[years]
+	cap_pd = printable(cap_pd)
 	# Add Total row
 	cap_pd = cap_pd.append(cap_pd.sum().rename('Total'))
 

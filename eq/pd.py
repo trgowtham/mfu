@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import locale
+locale.setlocale(locale.LC_MONETARY, 'hi_IN')
+
 import os, time, sys, requests, urllib, json
 from datetime import datetime,timedelta
 from tabulate import tabulate
@@ -9,8 +12,13 @@ from xirr import xirr
 
 # Import pandas as pd
 import pandas as pd
+pd.options.mode.chained_assignment = None  # default='warn'
 
 index = ['Fund Name', 'Fund Type', 'Fund Sub-Type', 'NAV date', 'Total Units', 'Total Inv', 'Cur NAV', 'Current Value', 'P/L', 'XIRR', 'Day P/L', 'Week P/L', 'Month P/L', 'Duration', 'Frequency', 'Category Wt', 'Portfolio Wt']
+
+
+def currency(val):
+	return locale.currency(val, grouping=True);
 
 
 def fund_pd_init(fname, tx_pd):
@@ -58,7 +66,10 @@ def load_nav(fund_pd, load_from_file):
 		fmap = pd.DataFrame(nav['data'])
 		x = fund_pd[fund]
 		x['Fund Name'] = fund
-		x['Fund Type'] = nav['meta']['scheme_category'].split(' Scheme - ')[0]
+		if nav['meta']['scheme_category'].split(' Scheme - ')[0] == 'Other':
+			x['Fund Type'] = 'Equity'
+		else:
+			x['Fund Type'] = nav['meta']['scheme_category'].split(' Scheme - ')[0]
 		x['Fund Sub-Type'] = nav['meta']['scheme_category'].split(' Scheme - ')[1]
 		x['NAV date'] = fmap.loc[0]['date']
 		x['NAV date'] = pd.to_datetime(x['NAV date'], dayfirst=True)
@@ -73,12 +84,36 @@ def load_nav(fund_pd, load_from_file):
 	return(fund_pd)
 
 
+def calculate_inv_amt(tx):
+	pur = []
+	for index,row in tx.iterrows():
+		if float(row['Units(Credits/Debits)']) > 0:
+			pur.append([row['Transaction_Date'], float(row['Units(Credits/Debits)']), row['Price']])
+		else:
+			if len(pur) <= 0:
+				# Invalid Data
+				return -9999
+			red_amt = -float(row['Units(Credits/Debits)'])
+			for p in pur:
+				if p[1] >= red_amt:
+					p[1] = p[1] - red_amt
+					break
+				else:
+					red_amt = red_amt - p[1]
+					p[1] = 0
+
+	inv = 0
+	for p in pur:
+		inv += p[1] * p[2]
+	return round(inv, 2)
+
+
 def calculate_amt(fund_pd, tx_pd):
 	tot_amt = [ 0, 0, 0]
 	for fund in fund_pd.columns:
 		x = fund_pd[fund]
 		x['Total Units'] = round(tx_pd.loc[tx_pd['AMC_Scheme_Name'] == fund, 'Units(Credits/Debits)'].sum(), 4)
-		x['Total Inv'] = -tx_pd.loc[tx_pd['AMC_Scheme_Name'] == fund, 'Amount(Credits/Debits)'].sum()
+		x['Total Inv'] = calculate_inv_amt(tx_pd.loc[tx_pd['AMC_Scheme_Name'] == fund])
 		x['Current Value'] = float(x['Cur NAV']) * float(x['Total Units'])
 		if x['Current Value'] <= 0:
 			fund_pd = fund_pd.drop(fund, axis=1)
@@ -185,6 +220,18 @@ def populate_txn(txn_fname):
 	return txn
 
 
+def data_print(tx_pd):
+	farr = tx_pd.AMC_Scheme_Name.unique()
+	for fund in farr:
+		g = tx_pd.loc[tx_pd['AMC_Scheme_Name'] == fund]
+		g['Amount(Credits/Debits)'] = -g['Amount(Credits/Debits)']
+		g['Transaction_Date'] = g['Transaction_Date'].dt.strftime('%d-%b-%Y')
+		csv_name = 'data/' + fund + ".txt"
+		with open(csv_name, 'w') as f:
+			f.write(tabulate(g, headers=g.columns, numalign="left", tablefmt="grid", floatfmt='.8g', showindex=False))
+			f.write('\n')
+
+
 def add_amt(fund_pd, ftype):
 	fund_tr = fund_pd.transpose()
 	try:
@@ -247,12 +294,14 @@ def format_data(fund_pd):
 			continue
 		# Not Working
 		#x['XIRR'] = '%s%%' % (x['XIRR'])
+		x['Total Inv'] = currency(x['Total Inv'])
+		x['P/L'] = currency(x['P/L'])
 		if fund in type_list:
-			x['Day P/L'] = '%s (%s%%)' % (round(x['Day P/L'], 2), round(x['Day P/L']/x['Current Value']*100, 2))
-			x['Current Value'] = '%s (%s%%)' % (round(x['Current Value'], 2), round(x['Current Value']/fund_pd['Total']['Current Value']*100, 2))
+			x['Day P/L'] = '%s (%s%%)' % (currency(x['Day P/L']), round(x['Day P/L']/x['Current Value']*100, 2))
+			x['Current Value'] = '%s (%s%%)' % (currency(x['Current Value']), round(x['Current Value']/fund_pd['Total']['Current Value']*100, 2))
 		else:
-			x['Day P/L'] = '%s (%s%%)' % (round(x['Day P/L'], 2), round(x['Day P/L']/x['Current Value']*100, 2))
-			x['Current Value'] = '%s (%s%%)' % (round(x['Current Value'], 2), round(x['Category Wt'], 2))
+			x['Day P/L'] = '%s (%s%%)' % (currency(x['Day P/L']), round(x['Day P/L']/x['Current Value']*100, 2))
+			x['Current Value'] = '%s (%s%%)' % (currency(x['Current Value']), round(x['Category Wt'], 2))
 
 
 def make_pd_printable(fund_pd):
@@ -269,6 +318,8 @@ def make_pd_printable(fund_pd):
 	fund_pd['Fund Name'] = fund_pd['Fund Name'].str.replace('Franklin_Templeton_India', 'Franklin')
 	fund_pd['Fund Name'] = fund_pd['Fund Name'].str.replace('Franklin_Templeton_Franklin_India', 'Franklin')
 	fund_pd['Fund Name'] = fund_pd['Fund Name'].str.replace('Opportunities', 'Opp')
+	fund_pd['Fund Name'] = fund_pd['Fund Name'].str.replace('_Magnum_', '_')
+	fund_pd['Fund Name'] = fund_pd['Fund Name'].str.replace('Nippon_India', 'Nippon_')
 
 	# Drop unwanted Columns
 	fund_pd.drop(['Fund Type'], axis = 1, inplace=True)
@@ -302,6 +353,7 @@ if __name__ == '__main__':
 		sys.exit()
 
 	tx_pd = populate_txn(vr_file)
+	data_print(tx_pd)
 
 	if '-c' in sys.argv:
 		capital_summary(tx_pd)
