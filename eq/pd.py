@@ -319,7 +319,8 @@ def make_pd_printable(fund_pd):
 	fund_pd['Fund Name'] = fund_pd['Fund Name'].str.replace('Franklin_Templeton_Franklin_India', 'Franklin')
 	fund_pd['Fund Name'] = fund_pd['Fund Name'].str.replace('Opportunities', 'Opp')
 	fund_pd['Fund Name'] = fund_pd['Fund Name'].str.replace('_Magnum_', '_')
-	fund_pd['Fund Name'] = fund_pd['Fund Name'].str.replace('Nippon_India', 'Nippon_')
+	fund_pd['Fund Name'] = fund_pd['Fund Name'].str.replace('Nippon_India', 'Nippon')
+	fund_pd['Fund Name'] = fund_pd['Fund Name'].str.replace('Mirae_Asset_Hybrid_Equity_Fund', 'Mirae_Asset_Hybrid_Equity')
 
 	# Drop unwanted Columns
 	fund_pd.drop(['Fund Type'], axis = 1, inplace=True)
